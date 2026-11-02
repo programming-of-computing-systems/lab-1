@@ -7,11 +7,12 @@
  *
  * Возможности:
  *  - включение тактирования порта;
- *  - инициализация/переинициализация группы выводов одного порта
- *    (режим, тип выхода, скорость, подтяжка, альтернативная функция,
- *    начальный уровень выхода) без «выбросов» на выходах;
+ *  - инициализация/переинициализация вывода (режим, тип выхода, скорость,
+ *    подтяжка, альтернативная функция, начальный уровень выхода)
+ *    без «выбросов» на выходе;
  *  - чтение текущих настроек вывода из регистров;
- *  - чтение/запись одиночных выводов и групп выводов в пределах порта.
+ *  - чтение/запись одиночного вывода (по номеру 0..15) и группы выводов
+ *    одного порта (по маске).
  */
 
 #ifndef INC_GPIO_DRV_H_
@@ -20,9 +21,8 @@
 #include "main.h"
 #include <stdint.h>
 
-/* Маски выводов (можно объединять через |) */
+/* Маска вывода по номеру (маски можно объединять через |) */
 #define GPIO_DRV_PIN(n)      ((uint16_t)(1U << (n)))
-#define GPIO_DRV_PIN_ALL     ((uint16_t)0xFFFFU)
 
 /* Режим вывода — значение поля MODERy[1:0] */
 typedef enum {
@@ -66,25 +66,23 @@ typedef struct {
 	gpio_drv_speed_t speed;
 	gpio_drv_pull_t  pull;
 	uint8_t          af;      /* номер альтернативной функции 0..15 (для GPIO_DRV_MODE_AF) */
-	gpio_drv_level_t level;   /* начальный уровень ODR (для OUTPUT, для AF/INPUT игнорируется аппаратно) */
+	gpio_drv_level_t level;   /* начальный уровень выхода (для GPIO_DRV_MODE_OUTPUT) */
 } gpio_drv_config_t;
 
 /* Тактирование */
 void gpio_drv_clock_enable(GPIO_TypeDef *port);
 
-/* Настройка */
-void gpio_drv_init(GPIO_TypeDef *port, uint16_t pins, const gpio_drv_config_t *cfg);
-void gpio_drv_get_config(GPIO_TypeDef *port, uint8_t pin_num, gpio_drv_config_t *cfg);
+/* Настройка одного вывода, pin — номер 0..15 */
+void gpio_drv_init(GPIO_TypeDef *port, uint8_t pin, const gpio_drv_config_t *cfg);
+void gpio_drv_get_config(GPIO_TypeDef *port, uint8_t pin, gpio_drv_config_t *cfg);
 
-/* Чтение */
-gpio_drv_level_t gpio_drv_read_pin(GPIO_TypeDef *port, uint16_t pin);
+/* Одиночный вывод, pin — номер 0..15 */
+gpio_drv_level_t gpio_drv_read_pin(GPIO_TypeDef *port, uint8_t pin);
+gpio_drv_level_t gpio_drv_read_output_pin(GPIO_TypeDef *port, uint8_t pin);
+void gpio_drv_write_pin(GPIO_TypeDef *port, uint8_t pin, gpio_drv_level_t level);
+
+/* Группа выводов, pins — маска (например, GPIO_DRV_PIN(13) | GPIO_DRV_PIN(14)) */
 uint16_t gpio_drv_read_pins(GPIO_TypeDef *port, uint16_t pins);
-gpio_drv_level_t gpio_drv_read_output_pin(GPIO_TypeDef *port, uint16_t pin);
-uint16_t gpio_drv_read_output_pins(GPIO_TypeDef *port, uint16_t pins);
-
-/* Запись */
-void gpio_drv_write_pin(GPIO_TypeDef *port, uint16_t pins, gpio_drv_level_t level);
 void gpio_drv_write_pins(GPIO_TypeDef *port, uint16_t pins, uint16_t values);
-void gpio_drv_toggle_pins(GPIO_TypeDef *port, uint16_t pins);
 
 #endif /* INC_GPIO_DRV_H_ */

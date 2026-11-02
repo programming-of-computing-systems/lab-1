@@ -32,12 +32,12 @@
 
 /* Аппаратура стенда SDK-1.1M: светодиоды PD13 (зелёный), PD14 (жёлтый),
    кнопка PC15 (при нажатии — низкий уровень, подтяжка на плате) */
-static const led_t led_green  = { GPIOD, GPIO_DRV_PIN(13), true };
-static const led_t led_yellow = { GPIOD, GPIO_DRV_PIN(14), true };
+static const led_t led_green  = { GPIOD, 13, true };
+static const led_t led_yellow = { GPIOD, 14, true };
 
 static button_t button = {
 	.port          = GPIOC,
-	.pin           = GPIO_DRV_PIN(15),
+	.pin           = 15,
 	.active_low    = true,
 	.pull          = GPIO_DRV_PULL_NONE,
 	.debounce_ms   = BUTTON_DEBOUNCE_MS,

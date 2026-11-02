@@ -21,7 +21,7 @@ typedef enum {
 typedef struct {
 	/* Параметры */
 	GPIO_TypeDef   *port;
-	uint16_t        pin;            /* маска вывода, например GPIO_DRV_PIN(15) */
+	uint8_t         pin;            /* номер вывода 0..15 */
 	bool            active_low;     /* true — при нажатии на выводе низкий уровень */
 	gpio_drv_pull_t pull;           /* внутренняя подтяжка */
 	uint32_t        debounce_ms;    /* время установления сигнала, мс */

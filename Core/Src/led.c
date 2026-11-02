@@ -30,11 +30,6 @@ void led_set(const led_t *led, bool on)
 	gpio_drv_write_pin(led->port, led->pin, led_level(led, on));
 }
 
-void led_toggle(const led_t *led)
-{
-	gpio_drv_toggle_pins(led->port, led->pin);
-}
-
 bool led_is_on(const led_t *led)
 {
 	return (gpio_drv_read_output_pin(led->port, led->pin) == GPIO_DRV_HIGH) == led->active_high;
