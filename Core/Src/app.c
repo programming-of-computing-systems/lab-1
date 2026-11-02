@@ -44,20 +44,26 @@ static button_t button = {
 	.long_press_ms = BUTTON_LONG_MS,
 };
 
+/*
+ * Состояния автомата анимации переполнения/опустошения счётчика.
+ * Последовательность: BOTH_OFF <-> BOTH_ON (BOTH_BLINKS раз) -> PAUSE ->
+ * GREEN_OFF <-> GREEN_ON (overflows раз) -> показ счётчика -> IDLE.
+ * Переход происходит, когда в текущем состоянии прошло заданное время.
+ */
 typedef enum {
-	ANIM_IDLE,
-	ANIM_BOTH_OFF,
-	ANIM_BOTH_ON,
-	ANIM_PAUSE,
-	ANIM_GREEN_OFF,
-	ANIM_GREEN_ON
+	ANIM_IDLE,       /* анимации нет: светодиоды показывают счётчик, кнопка обрабатывается */
+	ANIM_BOTH_OFF,   /* оба светодиода погашены на BLINK_OFF_MS, затем следующее мигание или пауза */
+	ANIM_BOTH_ON,    /* оба светодиода горят BLINK_ON_MS */
+	ANIM_PAUSE,      /* оба погашены на ANIM_PAUSE_MS между двумя частями анимации */
+	ANIM_GREEN_OFF,  /* зелёный погашен на BLINK_OFF_MS, затем следующее мигание или конец */
+	ANIM_GREEN_ON    /* зелёный горит BLINK_ON_MS */
 } anim_state_t;
 
-static uint8_t      counter;
-static uint32_t     overflows;
-static anim_state_t anim_state;
-static uint32_t     anim_tick;
-static uint32_t     anim_blinks_left;
+static uint8_t      counter;           /* значение 2-битного счётчика */
+static uint32_t     overflows;         /* число переполнений */
+static anim_state_t anim_state;        /* текущее состояние автомата анимации */
+static uint32_t     anim_tick;         /* момент входа в текущее состояние */
+static uint32_t     anim_blinks_left;  /* сколько миганий осталось в текущей части анимации */
 
 /* Вывод состояния светодиодов (меняются только те, чьё состояние отличается) */
 static void show(bool green, bool yellow)
