@@ -18,15 +18,8 @@
 
 #include "gpio_drv.h"
 
-/* Расстояние между базовыми адресами портов GPIOA, GPIOB, ... в адресном пространстве */
 #define GPIO_DRV_PORT_STRIDE   (GPIOB_BASE - GPIOA_BASE)
 
-/*
- * Записать value в поле регистра (чтение–модификация–запись).
- *   pos        — номер младшего бита поля;
- *   width_mask — маска ширины поля: 0x1, 0x3 или 0xF.
- * Остальные биты регистра (поля других выводов) не меняются.
- */
 static void set_field(volatile uint32_t *reg, uint32_t pos, uint32_t width_mask, uint32_t value)
 {
 	*reg = (*reg & ~(width_mask << pos)) | ((value & width_mask) << pos);
@@ -36,13 +29,11 @@ void gpio_drv_clock_enable(GPIO_TypeDef *port)
 {
 	uint32_t index = ((uint32_t)(uintptr_t)port - GPIOA_BASE) / GPIO_DRV_PORT_STRIDE;
 	RCC->AHB1ENR |= (RCC_AHB1ENR_GPIOAEN << index);
-	/* Чтение после записи — задержка до появления тактирования (errata STM32F4) */
 	(void)RCC->AHB1ENR;
 }
 
 void gpio_drv_init(GPIO_TypeDef *port, uint8_t pin, const gpio_drv_config_t *cfg)
 {
-	/* Уровень выхода задаётся заранее, пока вывод ещё в прежнем режиме */
 	if (cfg->mode == GPIO_DRV_MODE_OUTPUT) {
 		gpio_drv_write_pin(port, pin, cfg->level);
 	}
@@ -50,7 +41,6 @@ void gpio_drv_init(GPIO_TypeDef *port, uint8_t pin, const gpio_drv_config_t *cfg
 	set_field(&port->OSPEEDR,       2U * pin,        0x3U, cfg->speed);
 	set_field(&port->PUPDR,         2U * pin,        0x3U, cfg->pull);
 	set_field(&port->AFR[pin / 8U], 4U * (pin % 8U), 0xFU, cfg->af);
-	/* Режим — последним: вывод переключается уже с нужными настройками */
 	set_field(&port->MODER,         2U * pin,        0x3U, cfg->mode);
 }
 
@@ -76,7 +66,6 @@ gpio_drv_level_t gpio_drv_read_output_pin(GPIO_TypeDef *port, uint8_t pin)
 
 void gpio_drv_write_pin(GPIO_TypeDef *port, uint8_t pin, gpio_drv_level_t level)
 {
-	/* BSRR: биты 0..15 — установка, 16..31 — сброс; запись атомарна */
 	port->BSRR = (level == GPIO_DRV_HIGH) ? (1U << pin) : (1U << (pin + 16U));
 }
 
@@ -87,8 +76,6 @@ uint16_t gpio_drv_read_pins(GPIO_TypeDef *port, uint16_t pins)
 
 void gpio_drv_write_pins(GPIO_TypeDef *port, uint16_t pins, uint16_t values)
 {
-	/* Одна запись в BSRR: выводы из pins, где в values 1, — в 1, остальные из pins — в 0.
-	   Все выводы меняются одновременно, выводы вне pins не затрагиваются. */
 	uint32_t set   = (uint32_t)(values & pins);
 	uint32_t reset = (uint32_t)(~values & pins);
 	port->BSRR = set | (reset << 16U);
