@@ -33,7 +33,7 @@
 /* Аппаратура стенда SDK-1.1M: светодиоды PD13 (зелёный), PD14 (жёлтый),
    кнопка PC15 (при нажатии — низкий уровень, подтяжка на плате) */
 static const led_t led_green  = { GPIOD, 13, true };
-static const led_t led_yellow = { GPIOD, 14, true };
+static const dual_led_t led_yellow = { GPIOD, 14, 15, true };
 
 static button_t button = {
 	.port          = GPIOC,
@@ -71,8 +71,8 @@ static void show(bool green, bool yellow)
 	if (led_is_on(&led_green) != green) {
 		led_set(&led_green, green);
 	}
-	if (led_is_on(&led_yellow) != yellow) {
-		led_set(&led_yellow, yellow);
+	if (dual_led_is_on(&led_yellow) != yellow) {
+		dual_led_set(&led_yellow, yellow);
 	}
 }
 
@@ -182,7 +182,7 @@ static void counter_decrement(uint32_t now)
 void app_init(uint32_t now)
 {
 	led_init(&led_green);
-	led_init(&led_yellow);
+	dual_led_init(&led_yellow);
 	button_init(&button, now);
 
 	counter = 0;
